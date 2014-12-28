@@ -41,7 +41,8 @@
 ;
 ;
 (define what-scheme-implementation
-  'mzscheme
+  'tinyscheme
+ ;'mzscheme
  ;'mit
  ;'chez
  ;'scm
@@ -51,16 +52,31 @@
                     ;for sort-list to be defined.
 
 
-#|
 (case what-scheme-implementation
   ((scm)
-   (require 'sort)))
-|#
+    (require 'sort))
+  ((tinyscheme)
+    (define (sort predicate list)
+      (letrec (
+	  (partition (lambda (p ls a b)
+	    (cond ((null? ls)
+		    (cons a b))
+		  ((predicate (car ls) p)
+		    (partition p (cdr ls) (cons (car ls) a) b))
+		  (else
+		    (partition p (cdr ls) a (cons (car ls) b))))))
+	  (qsort (lambda (ls)
+	    (if (null? ls)
+		'()
+		(let* ((p (car ls)) (z (partition p (cdr ls) '() '())))
+		  (append (qsort (car z))
+			  (cons p (qsort (cdr z)))))))))
+	(qsort list)))))
 
 (define gsort
   (case what-scheme-implementation
     ((mit mzscheme)      (lambda (predicate list) (sort list predicate)))
-    ((chez)     (lambda (predicate list) (sort predicate list)))
+    ((chez tinyscheme)   (lambda (predicate list) (sort predicate list)))
     ((scheme48) (lambda (predicate list) (sort-list predicate list)))
     ((scm)      (lambda (predicate list) (sort list predicate)))))
 
